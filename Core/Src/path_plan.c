@@ -132,7 +132,7 @@ static char* put_int(char *p, int32_t v)
     uint8_t  k = 0;
     uint32_t u;
 
-    if (v < 0) { *p++ = '-'; u = (uint32_t)(-v); }
+    if (v < 0) { *p++ = '-'; u = (uint32_t)(-(v + 1)) + 1u; }
     else       { u = (uint32_t)v; }
 
     if (u == 0)
@@ -691,30 +691,38 @@ static void handle_line(const char *ln)
 
     if (starts_with(ln, "START:"))
     {
-        if (atoi_xy(ln + 6, &x, &y))
+        if (!atoi_xy(ln + 6, &x, &y))
+        {
+            pkt_err = 1;                             /* 数值格式错 */
+        }
+        else if (x < 0 || x > FIELD_MAX_MM || y < 0 || y > FIELD_MAX_MM)
+        {
+            pkt_err = 1;                             /* 坐标越界 */
+        }
+        else
         {
             pkt_start_x    = x;                      /* 只入缓存, 等包结束统一处理 */
             pkt_start_y    = y;
             pkt_have_start = 1;
             pkt_new        = 1;
         }
-        else
-        {
-            pkt_err = 1;
-        }
     }
     else if (starts_with(ln, "GOAL:"))
     {
-        if (atoi_xy(ln + 5, &x, &y))
+        if (!atoi_xy(ln + 5, &x, &y))
+        {
+            pkt_err = 1;                             /* 数值格式错 */
+        }
+        else if (x < 0 || x > FIELD_MAX_MM || y < 0 || y > FIELD_MAX_MM)
+        {
+            pkt_err = 1;                             /* 坐标越界 */
+        }
+        else
         {
             pkt_goal_x    = x;
             pkt_goal_y    = y;
             pkt_have_goal = 1;
             pkt_new       = 1;
-        }
-        else
-        {
-            pkt_err = 1;
         }
     }
     else if (starts_with(ln, "OBS_ADD:"))
@@ -860,10 +868,12 @@ void PathPlan_OnRxByte(uint8_t b)
         keep = tail_keyword_len();
         if (keep > 0)                                /* 缓冲区末尾出现了新消息的关键字 */
         {
-            line_buf[line_len - keep] = '\0';
-            handle_line(line_buf);                   /* 关键字之前的内容 = 上一条消息 */
-            memmove(line_buf, &line_buf[line_len - keep], keep);
-            line_len = keep;                         /* 关键字留在缓冲区开头, 继续攒新消息 */
+            char kbuf[8];                            /* 最长关键字 "OBS_ADD:" = 8 字节 */
+            memcpy(kbuf, &line_buf[line_len - keep], keep);   /* ① 先备份关键字 */
+            line_buf[line_len - keep] = '\0';                  /* ② 截断上一条消息 */
+            handle_line(line_buf);                              /* ③ 处理上一条消息 */
+            memcpy(line_buf, kbuf, keep);                      /* ④ 关键字原样放回缓冲开头 */
+            line_len = keep;                                    /* ⑤ 继续攒新消息 */
         }
     }
     else
