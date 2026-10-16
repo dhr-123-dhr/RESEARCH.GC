@@ -1,0 +1,25 @@
+--cpu Cortex-M3
+"research.gc\startup_stm32f103xb.o"
+"research.gc\main.o"
+"research.gc\path_plan.o"
+"research.gc\gpio.o"
+"research.gc\usart.o"
+"research.gc\stm32f1xx_it.o"
+"research.gc\stm32f1xx_hal_msp.o"
+"research.gc\stm32f1xx_hal_gpio_ex.o"
+"research.gc\stm32f1xx_hal_uart.o"
+"research.gc\stm32f1xx_hal.o"
+"research.gc\stm32f1xx_hal_rcc.o"
+"research.gc\stm32f1xx_hal_rcc_ex.o"
+"research.gc\stm32f1xx_hal_gpio.o"
+"research.gc\stm32f1xx_hal_dma.o"
+"research.gc\stm32f1xx_hal_cortex.o"
+"research.gc\stm32f1xx_hal_pwr.o"
+"research.gc\stm32f1xx_hal_flash.o"
+"research.gc\stm32f1xx_hal_flash_ex.o"
+"research.gc\stm32f1xx_hal_exti.o"
+"research.gc\system_stm32f1xx.o"
+--strict --scatter "RESEARCH.GC\RESEARCH_GC.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "RESEARCH_GC.map" -o RESEARCH.GC\RESEARCH_GC.axf
