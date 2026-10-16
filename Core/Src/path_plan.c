@@ -30,6 +30,9 @@
 #include "usart.h"      /* 使用 huart1(USART1 = 淘晶驰串口屏, 115200 8N1) 发送数据 */
 #include <string.h>
 
+/* USART1_RX 的 DMA 句柄: CubeMX 在 usart.c 里定义(DMA1_Channel5, 循环模式) */
+extern DMA_HandleTypeDef hdma_usart1_rx;
+
 /* ==========================================================================
  * 一、地图常量(与上位机 agv_roadnet_planner.py 完全一致, 单位 mm)
  * ========================================================================== */
@@ -113,6 +116,10 @@ static int16_t  pkt_start_x, pkt_start_y;    /* 本包 START 的坐标 */
 static int16_t  pkt_goal_x,  pkt_goal_y;     /* 本包 GOAL 的坐标 */
 static int16_t  pkt_obs[OBS_MAX][2];         /* 本包缓存的障碍坐标 */
 static uint8_t  pkt_obs_n;                   /* 本包已缓存的障碍条数 */
+
+/* ---- 串口接收 DMA(USART1_RX -> DMA1_Channel5, 循环模式) ---- */
+static uint8_t  rx_dma_buf[RX_DMA_BUF_SIZE]; /* DMA 环形接收缓冲 */
+static uint16_t rx_dma_last;                 /* 上次已取出到哪个位置(索引) */
 
 /* ==========================================================================
  * 三、小工具函数(全整型, 不用 sprintf, 省 Flash)
@@ -884,7 +891,41 @@ void PathPlan_Tick(void)
 }
 
 /* ==========================================================================
- * 十、初始化与查询接口
+ * 十、串口接收(USART1_RX 由 DMA1_Channel5 循环搬运到 rx_dma_buf)
+ *   · PathPlan_StartRxDma(): HAL_UART_Receive_DMA(循环模式, 一次启动永久有效)
+ *   · PathPlan_PollRxDma():  主循环里调用, 按 DMA 剩余计数算出"新到哪了",
+ *                            把新字节逐个喂给 PathPlan_OnRxByte()
+ *   ★这样 CPU 再忙(算路径 / 发 t1 / 以后的底盘代码)也不会丢字节
+ * ========================================================================== */
+
+/* 启动 DMA 循环接收(PathPlan_Init() 里已调用; 重复调用也没关系) */
+void PathPlan_StartRxDma(void)
+{
+    rx_dma_last = 0;
+    (void)HAL_UART_Receive_DMA(&huart1, rx_dma_buf, RX_DMA_BUF_SIZE);
+}
+
+/* 在 while(1) 里调用: 取出 DMA 已经收到、但还没交给解析器的字节 */
+void PathPlan_PollRxDma(void)
+{
+    uint16_t pos;
+
+    /* DMA 剩余待搬运字节数 -> 反算出"当前写指针位置" */
+    pos = (uint16_t)(RX_DMA_BUF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
+
+    while (rx_dma_last != pos)                   /* 逐个取走新到的字节 */
+    {
+        PathPlan_OnRxByte(rx_dma_buf[rx_dma_last]);
+        rx_dma_last++;
+        if (rx_dma_last >= RX_DMA_BUF_SIZE)
+        {
+            rx_dma_last = 0;                     /* 环形绕回 */
+        }
+    }
+}
+
+/* ==========================================================================
+ * 十一、初始化与查询接口
  * ========================================================================== */
 void PathPlan_Init(void)
 {
@@ -912,6 +953,8 @@ void PathPlan_Init(void)
     frame_buf[0] = '\0';
 
     (void)YELLOW_BLOCK;                      /* 4 个黄块仅作地图记录, 不参与 A* */
+
+    PathPlan_StartRxDma();                   /* 启动 USART1 的 DMA 循环接收 */
 }
 
 uint8_t PathPlan_SetStart(int16_t x, int16_t y)

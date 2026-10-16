@@ -1,8 +1,9 @@
 --cpu Cortex-M3
 "research.gc\startup_stm32f103xb.o"
-"research.gc\main.o"
 "research.gc\path_plan.o"
+"research.gc\main.o"
 "research.gc\gpio.o"
+"research.gc\dma.o"
 "research.gc\usart.o"
 "research.gc\stm32f1xx_it.o"
 "research.gc\stm32f1xx_hal_msp.o"

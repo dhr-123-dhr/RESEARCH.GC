@@ -19,6 +19,7 @@ virtualFolder:
           files:
             - path: ../Core/Src/path_plan.c
             - path: ../Core/Inc/path_plan.h
+            - path: ../Core/Src/dma.c
           folders:
             - name: Core
               files:

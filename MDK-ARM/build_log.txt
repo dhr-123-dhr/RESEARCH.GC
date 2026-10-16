@@ -1,13 +1,8 @@
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'RESEARCH.GC'
-compiling main.c...
-"no source": Error:  #219: error while deleting file "research.gc\main.d": Permission denied
-../Core/Src/main.c: 0 warnings, 1 error
 compiling path_plan.c...
-"no source": Error:  #219: error while deleting file "research.gc\path_plan.d": Permission denied
-../Core/Src/path_plan.c: 0 warnings, 1 error
 linking...
-Program Size: Code=6900 RO-data=396 RW-data=44 ZI-data=2876  
+Program Size: Code=8204 RO-data=396 RW-data=56 ZI-data=3320  
 FromELF: creating hex file...
 "RESEARCH.GC\RESEARCH_GC.axf" - 0 Error(s), 0 Warning(s).
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:02

@@ -26,6 +26,7 @@ research.gc\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 research.gc\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 research.gc\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 research.gc\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+research.gc\main.o: ../Core/Inc/dma.h
 research.gc\main.o: ../Core/Inc/usart.h
 research.gc\main.o: ../Core/Inc/gpio.h
 research.gc\main.o: ../Core/Inc/path_plan.h

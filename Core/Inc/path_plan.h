@@ -52,6 +52,9 @@
                                      (放宽到 500ms, 是为了容忍屏把长串分片发送) */
 #define OBS_MAX         12       /* 一包内最多缓存几条 OBS_ADD(屏上障碍按钮数量上限) */
 #define OBS_TOL_MM      150      /* 黑柱"命中某条边"的容差 mm(点的是圆柱实体位置) */
+
+/* ============ 串口接收 DMA(USART1_RX = DMA1_Channel5, usart.c 里已配成循环模式) ============ */
+#define RX_DMA_BUF_SIZE 256      /* DMA 环形接收缓冲(字节); 一整包最多几十字节, 256 足够 */
                                  /* 未摆放的柱: 屏可以直接【不发那行 OBS_ADD】;
                                     发 "OBS_ADD:0,0" 也同样合法(不封锁任何边) */
 
@@ -74,9 +77,11 @@ typedef struct
 } PathPlanStep;
 
 /* ===================== 对外函数 ===================== */
-void    PathPlan_Init(void);
-void    PathPlan_OnRxByte(uint8_t b);                   /* 在 USART1 接收中断里调用本函数 */
-void    PathPlan_Tick(void);                            /* 在 while(1) 里调用(200ms 包边界判定) */
+void    PathPlan_Init(void);                            /* 内部会自动启动 DMA 接收 */
+void    PathPlan_OnRxByte(uint8_t b);                   /* 喂入 1 个字节(一般由 PollRxDma 调用) */
+void    PathPlan_StartRxDma(void);                      /* 启动 USART1 的 DMA 循环接收 */
+void    PathPlan_PollRxDma(void);                       /* 在 while(1) 里调用: 取出 DMA 新收到的字节 */
+void    PathPlan_Tick(void);                            /* 在 while(1) 里调用(包边界判定) */
 
 uint8_t PathPlan_SetStart(int16_t x, int16_t y);        /* 手动测试: 设置起点启停区中心 */
 uint8_t PathPlan_SetGoal(int16_t x, int16_t y);         /* 手动测试: 设置终点启停区中心 */

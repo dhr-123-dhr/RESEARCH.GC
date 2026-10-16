@@ -122,15 +122,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    uint8_t rx;             /* 方案B: 轮询接收; 声明放代码块最前面(C90 兼容) */
-
-    /* 串口屏 -> STM32: 每次都试着收 1 个字节(超时 0 = 非阻塞, 不会卡住主循环),
-       收到就喂给路网 A* 解析器; 解析器内部负责"关键字切分 + 200ms 空闲收尾" */
-    if (HAL_UART_Receive(&huart1, &rx, 1, 0) == HAL_OK)
-    {
-        PathPlan_OnRxByte(rx);
-    }
-    PathPlan_Tick();        /* 整包边界判定(收到空行 或 最后字节后200ms空闲 -> 重算并刷屏) */
+    /* 串口屏 -> STM32: USART1_RX 由 DMA1_Channel5 循环搬运, 这里只把新到的字节取出来
+       交给路网 A* 解析器(CPU 再忙也不会丢字节); 解析器内部负责"关键字切分 + 500ms 空闲收尾" */
+    PathPlan_PollRxDma();
+    PathPlan_Tick();        /* 整包边界判定(收到空行 或 最后字节后500ms空闲 -> 重算并刷屏) */
     //Wheels_RunPath();     /* 底盘执行占位: 自行按 steps[] 逐步走, 帧用 PathPlan_GetStepFrame(i) 取 */
   }
   /* USER CODE END 3 */
